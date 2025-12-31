@@ -71,7 +71,9 @@ io.on('connection', (socket) => {
             onlineStatus[name] = true;
             socket.playerName = name;
             socket.emit('role_assigned', { role: 'PLAYER', name: name });
-            fs.writeFileSync(DB_FILE, JSON.stringify(playersDatabase));
+            fs.writeFile(DB_FILE, JSON.stringify(playersDatabase), (err) => {
+                if (err) console.error('Error saving players:', err);
+            });
         }
         socket.emit('game_update', gameState);
         broadcastUpdates();
@@ -95,7 +97,9 @@ io.on('connection', (socket) => {
             playersDatabase[name].hasSubmitted = false;
             playersDatabase[name].isGraded = true; 
             checkStateTransition();
-            fs.writeFileSync(DB_FILE, JSON.stringify(playersDatabase));
+            fs.writeFile(DB_FILE, JSON.stringify(playersDatabase), (err) => {
+                if (err) console.error('Error saving players:', err);
+            });
             broadcastUpdates();
         }
     });
@@ -140,7 +144,9 @@ io.on('connection', (socket) => {
     socket.on('reset_all', () => {
         playersDatabase = {};
         gameState = { currentQuestionIndex: -1, status: "LOBBY", currentQuestionText: "", timerExpired: false, totalQuestions: questions.length };
-        fs.writeFileSync(DB_FILE, JSON.stringify(playersDatabase));
+        fs.writeFile(DB_FILE, JSON.stringify(playersDatabase), (err) => {
+            if (err) console.error('Error saving players:', err);
+        });
         io.emit('game_update', gameState);
         broadcastUpdates();
     });
