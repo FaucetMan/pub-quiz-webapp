@@ -28,6 +28,7 @@ let gameState = {
 };
 
 let onlineStatus = {};
+let questionTimeout = null; // SERVER SIDE TIMER
 
 app.use(express.static('public'));
 
@@ -37,14 +38,14 @@ const broadcastUpdates = () => {
 
 const checkStateTransition = () => {
     const players = Object.values(playersDatabase);
-    const onlineCount = Object.keys(onlineStatus).length;
+    const totalPlayerCount = players.length; // Uses total registered, not just online
     
     const pendingCount = players.filter(p => p.hasSubmitted).length;
-    const finishedCount = players.filter(p => (p.hasSubmitted || p.isGraded) && onlineStatus[p.name]).length;
-    const allSubmitted = finishedCount >= onlineCount && onlineCount > 0;
+    const finishedCount = players.filter(p => (p.hasSubmitted || p.isGraded)).length;
+    const allSubmitted = finishedCount >= totalPlayerCount && totalPlayerCount > 0;
 
     if ((gameState.timerExpired || allSubmitted) && pendingCount === 0) {
-        // Ako smo na zadnjem pitanju i sve je ocijenjeno -> FINISH
+        clearTimeout(questionTimeout);
         if (gameState.currentQuestionIndex === questions.length - 1 && gameState.status === "GRADING") {
             gameState.status = "FINISH";
         } else {
@@ -64,7 +65,7 @@ io.on('connection', (socket) => {
         } else if (name === SCORER_CODE) {
             socket.emit('role_assigned', { role: 'SCORER' });
         } else {
-            if (onlineStatus[name]) return socket.emit('error_msg', 'Ime je zauzeto!');
+            // REJOIN FIX: Removed the "Ime je zauzeto" block to allow re-entry
             if (!playersDatabase[name]) {
                 playersDatabase[name] = { name: name, score: 0, currentAnswer: "", hasSubmitted: false, isGraded: false, lastPoints: 0 };
             }
@@ -104,21 +105,21 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('times_up', () => {
+    // Modified times_up to be callable by server or client safely
+    const handleTimesUp = () => {
         if (gameState.status !== "QUESTION") return;
         gameState.timerExpired = true;
-        
-        // Svi koji nisu poslali, dobivaju marker "ISTEKLO VRIJEME"
-        Object.keys(onlineStatus).forEach(name => {
-            if (playersDatabase[name] && !playersDatabase[name].hasSubmitted && !playersDatabase[name].isGraded) {
+        Object.keys(playersDatabase).forEach(name => {
+            if (!playersDatabase[name].hasSubmitted && !playersDatabase[name].isGraded) {
                 playersDatabase[name].currentAnswer = "ISTEKLO VRIJEME";
                 playersDatabase[name].hasSubmitted = true;
             }
         });
-        
         checkStateTransition();
         broadcastUpdates();
-    });
+    };
+
+    socket.on('times_up', handleTimesUp);
 
     socket.on('start_game', () => {
         if (gameState.status === "LOBBY" || gameState.status === "LEADERBOARD") {
@@ -132,6 +133,11 @@ io.on('connection', (socket) => {
                     playersDatabase[p].isGraded = false;
                     playersDatabase[p].currentAnswer = "";
                 });
+                
+                // START SERVER TIMER (60s + 2s buffer for network)
+                clearTimeout(questionTimeout);
+                questionTimeout = setTimeout(handleTimesUp, 62000);
+
                 io.emit('game_update', gameState);
                 broadcastUpdates();
             } else {
@@ -143,6 +149,7 @@ io.on('connection', (socket) => {
 
     socket.on('reset_all', () => {
         playersDatabase = {};
+        clearTimeout(questionTimeout);
         gameState = { currentQuestionIndex: -1, status: "LOBBY", currentQuestionText: "", timerExpired: false, totalQuestions: questions.length };
         fs.writeFile(DB_FILE, JSON.stringify(playersDatabase), (err) => {
             if (err) console.error('Error saving players:', err);
@@ -162,7 +169,8 @@ io.on('connection', (socket) => {
         if (socket.playerName) {
             delete onlineStatus[socket.playerName];
             broadcastUpdates();
-            checkStateTransition();
+            // We no longer trigger checkStateTransition on disconnect 
+            // to prevent the game ending just because someone crashed.
         }
     });
 });
