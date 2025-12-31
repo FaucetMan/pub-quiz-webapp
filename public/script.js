@@ -1,5 +1,6 @@
 const socket = io();
-let myRole = "", myName = "", timerInt;
+let myRole = "", myName = "", timerInt = null;
+let myTimeExpired = false;
 
 // Automatska prijava ako ime postoji u localstorageu
 window.onload = () => {
@@ -83,10 +84,19 @@ socket.on('game_update', state => {
             document.getElementById('p-input-area').classList.remove('hidden');
             document.getElementById('p-wait-msg').classList.add('hidden');
             document.getElementById('p-q-title').innerText = progressText;
+            myTimeExpired = false;
         } else if (state.status === 'LEADERBOARD' || state.status === 'FINISH') {
             document.getElementById('p-input-area').classList.add('hidden');
             document.getElementById('p-wait-msg').classList.remove('hidden');
             document.getElementById('p-wait-msg').innerHTML = "<h2>Pogledaj u ekran!</h2><p>Rezultati stižu...</p>";
+        } else if (state.status === 'GRADING') {
+            document.getElementById('p-input-area').classList.add('hidden');
+            document.getElementById('p-wait-msg').classList.remove('hidden');
+            if(myTimeExpired) {
+                document.getElementById('p-wait-msg').innerHTML = "<h2>⏰ Vrijeme je isteklo!</h2><p>Čekanje na ispravak...</p>";
+            } else {
+                document.getElementById('p-wait-msg').innerHTML = "<h2>Odgovor poslan!</h2><p>Čekanje na ispravak...</p>";
+            }
         }
     }
 
@@ -95,6 +105,13 @@ socket.on('game_update', state => {
         const isReady = (state.status === 'LOBBY' || state.status === 'LEADERBOARD');
         btn.disabled = !isReady;
         if(state.status === 'FINISH') btn.innerText = "KVIZ ZAVRŠEN";
+        
+        const csvBtn = document.getElementById('csv-download-btn');
+        if(state.status === 'FINISH') {
+            csvBtn.style.display = 'inline-block';
+        } else {
+            csvBtn.style.display = 'none';
+        }
     }
 });
 
@@ -109,6 +126,7 @@ socket.on('update_players', data => {
         
         // Prikaz tablice u određenim fazama
         if(mainMsg.includes("POREDAK") || mainMsg.includes("PRIDRUŽITE") || mainMsg.includes("KRAJ")) {
+            window.leaderboardData = players;
             area.innerHTML = players.map((p,i)=>`
                 <div class="lb-row ${online[p[0]] ? '' : 'is-offline'} ${i === 0 && mainMsg.includes("KRAJ") ? 'winner' : ''}">
                     <span>${i+1}. ${p[0]}</span>
@@ -158,10 +176,24 @@ function startTimer(sec) {
             clearInterval(timerInt);
             box.innerText = "KRAJ VREMENA";
             if(myRole === 'DISPLAY') {
+                myTimeExpired = true;
                 setTimeout(() => {
                     socket.emit('times_up');
                 }, 100);
             }
         }
     }, 1000);
+}
+
+function downloadCSV() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "Rang,Ime, Bodovi\n"
+        + (window.leaderboardData || []).map((p,i) => `${i+1},${p[0]},${p[1].score}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "leaderboard.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
