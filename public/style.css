@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+:root {
+    --primary: #00d2ff;
+    --secondary: #3a7bd5;
+    --bg: #0f0c29;
+    --surface: #1b1e36;
+    --accent: #f72585;
+    --success: #4cc9f0;
+    --danger: #ff4d4d;
+    --text: #ffffff;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: var(--text);
+    margin: 0; min-height: 100vh;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.container {
+    width: 90%; max-width: 800px;
+    background: rgba(27, 30, 54, 0.9);
+    padding: 30px; border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+}
+
+.hidden { display: none !important; }
+
+#timer-box {
+    font-size: 5rem; font-weight: 900;
+    color: var(--primary);
+    margin: 10px 0;
+}
+
+.timer-warning { color: var(--danger) !important; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+.status-dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;
+}
+.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+.player-card {
+    background: rgba(255,255,255,0.05);
+    padding: 12px; margin: 8px; border-radius: 12px;
+    text-align: left;
+}
+.is-offline { opacity: 0.4; }
+
+.lb-row {
+    display: flex; justify-content: space-between;
+    padding: 15px; margin: 8px 0;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px; font-size: 1.2rem;
+}
+
+button {
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    color: white; border: none; padding: 12px 24px;
+    border-radius: 10px; font-weight: bold; cursor: pointer;
+}
+button:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+button.secondary { background: #444; }
+button.danger { background: var(--danger); }
+
+input {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--secondary);
+    color: white; padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box;
+}
+
+/* Dodatak na tvoj CSS */
+.winner {
+    border: 2px solid gold;
+    background: rgba(255, 215, 0, 0.2) !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px gold;
+}
+
+#player-header {
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 20px; 
+    border-bottom: 1px solid #333; 
+    padding-bottom: 10px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+#p-name { color: var(--primary); }
+#p-score { color: var(--success); }
+
+/* Osigurava da inputi ne "pobjegnu" na mobitelu */
+input[type="number"] {
+    font-size: 16px; /* sprječava auto-zoom na iOSu */
+}

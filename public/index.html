@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pub Kviz PRO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="login-screen">
+            <h1>🍻 PUB KVIZ</h1>
+            <input type="text" id="name-input" placeholder="Upiši ime ili šifru">
+            <br><br>
+            <button onclick="join()">PRIDRUŽI SE</button>
+        </div>
+
+        <div id="display-screen" class="hidden">
+            <div id="q-progress" style="font-size: 1.2rem; color: var(--primary); margin-bottom: 10px;"></div>
+            <h1 id="display-main-msg">Čekanje na igrače...</h1>
+            <div id="timer-box"></div>
+            <div id="display-area"></div>
+            <div id="sub-counter-area" style="margin-top: 30px; font-weight: bold; color: #aaa;"></div>
+        </div>
+
+        <div id="player-screen" class="hidden">
+            <div id="player-header">
+                <span id="p-name"></span>
+                <span id="p-score"></span>
+            </div>
+            <div id="player-main">
+                <div id="p-wait-msg">
+                    <h2>Spojeni ste!</h2>
+                    <p>Pričekajte početak pitanja...</p>
+                </div>
+                <div id="p-input-area" class="hidden">
+                    <h2 id="p-q-title">VAŠ ODGOVOR:</h2>
+                    <input type="text" id="ans-input" placeholder="Tipkaj ovdje...">
+                    <br><br>
+                    <button onclick="sendAns()" style="width: 100%;">POŠALJI ODGOVOR</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scorer-screen" class="hidden">
+            <h2>SUDAC CONTROL</h2>
+            <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                <button id="next-q-btn" onclick="nextQ()">SLJEDEĆE PITANJE</button>
+                <button onclick="reset()" class="secondary">RESET</button>
+            </div>
+            <div id="grading-list"></div>
+            <hr style="opacity:0.2; margin: 20px 0;">
+            <h3>Igrači i status:</h3>
+            <div id="scorer-player-list"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
